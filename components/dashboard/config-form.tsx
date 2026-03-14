@@ -49,6 +49,7 @@ export function ServerConfigForm({
         headers: {
           'Content-Type': 'application/json',
         },
+        credentials: 'include',
         body: JSON.stringify({
           serverId,
           config: {

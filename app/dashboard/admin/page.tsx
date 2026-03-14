@@ -33,7 +33,9 @@ export default function AdminPage() {
   useEffect(() => {
     const fetchGuilds = async () => {
       try {
-        const response = await fetch('/api/auth/guilds');
+        const response = await fetch('/api/auth/guilds', {
+          credentials: 'include',
+        });
         if (!response.ok) {
           router.push('/');
           return;
@@ -57,7 +59,9 @@ export default function AdminPage() {
 
     const fetchConfig = async () => {
       try {
-        const response = await fetch(`/api/config?serverId=${selectedServer}`);
+        const response = await fetch(`/api/config?serverId=${selectedServer}`, {
+          credentials: 'include',
+        });
         if (response.ok) {
           const data = await response.json();
           setConfig(data);
