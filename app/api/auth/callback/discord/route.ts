@@ -7,33 +7,15 @@ const CLIENT_ID = process.env.DISCORD_CLIENT_ID!;
 const CLIENT_SECRET = process.env.DISCORD_CLIENT_SECRET!;
 const REDIRECT_URI = process.env.DISCORD_REDIRECT_URI!;
 
-// GET handler - receives OAuth callback from Discord
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
   const code = searchParams.get("code");
 
   if (!code) {
-    return NextResponse.redirect(new URL("/", request.url));
+    return NextResponse.redirect(new URL("/?error=no_code", request.url));
   }
 
-  // Redirect to the page that will handle the auth via POST
-  return NextResponse.redirect(
-    new URL(`/api/auth/callback/discord?code=${code}`, request.url)
-  );
-}
-
-// POST handler - processes the auth and sets the cookie
-export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
-    const { code } = body;
-
-    if (!code) {
-      return NextResponse.json(
-        { error: "No code provided" },
-        { status: 400 }
-      );
-    }
 
     // Exchange code for token
     const tokenResponse = await axios.post(
@@ -93,21 +75,10 @@ export async function POST(request: NextRequest) {
       { expiresIn: "7d" }
     );
 
-    // Create response with success data
-    const response = NextResponse.json({
-      success: true,
-      user: {
-        id: user.id,
-        username: user.username,
-        avatar: user.avatar,
-      },
-      guilds: guilds.map((g: any) => ({
-        id: g.id,
-        name: g.name,
-        icon: g.icon,
-        owner: g.owner,
-      })),
-    });
+    // Create redirect response to dashboard
+    const response = NextResponse.redirect(
+      new URL("/dashboard", request.url)
+    );
 
     // Set the auth token cookie
     response.cookies.set("auth_token", jwtToken, {
@@ -121,9 +92,8 @@ export async function POST(request: NextRequest) {
     return response;
   } catch (error) {
     console.error("[v0] Discord auth error:", error);
-    return NextResponse.json(
-      { error: "Authentication failed" },
-      { status: 500 }
+    return NextResponse.redirect(
+      new URL("/?error=auth_failed", request.url)
     );
   }
 }
