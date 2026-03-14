@@ -21,8 +21,11 @@ interface AuthData {
 export async function verifyAuth(request: NextRequest): Promise<AuthData | null> {
   try {
     const token = request.cookies.get("auth_token")?.value;
+    console.log("[v0] Verifying auth - Token exists:", !!token);
+    console.log("[v0] All cookies:", request.cookies.getAll().map(c => c.name));
 
     if (!token) {
+      console.log("[v0] No token found in cookies");
       return null;
     }
 
@@ -31,6 +34,7 @@ export async function verifyAuth(request: NextRequest): Promise<AuthData | null>
       process.env.NEXTAUTH_SECRET!
     ) as AuthData;
 
+    console.log("[v0] Auth verified for user:", decoded.id);
     return decoded;
   } catch (error) {
     console.error("[v0] Auth verification error:", error);
