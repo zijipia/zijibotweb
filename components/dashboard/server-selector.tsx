@@ -23,7 +23,9 @@ export function ServerSelector({ onSelect, selectedServerId }: ServerSelectorPro
   useEffect(() => {
     const fetchGuilds = async () => {
       try {
-        const response = await fetch('/api/auth/guilds');
+        const response = await fetch('/api/auth/guilds', {
+          credentials: 'include',
+        });
         if (response.ok) {
           const data = await response.json();
           setGuilds(data);
