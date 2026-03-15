@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import axios from "axios";
 import jwt from "jsonwebtoken";
+import { saveUserSession, saveUserGuilds } from "@/lib/mongodb";
 
 const DISCORD_API = "https://discord.com/api/v10";
 const CLIENT_ID = process.env.DISCORD_CLIENT_ID!;
@@ -55,7 +56,11 @@ export async function GET(request: NextRequest) {
 
     const guilds = guildsResponse.data;
 
-    // Create JWT token
+    // Save user session and guilds to MongoDB
+    await saveUserSession(user.id, access_token);
+    await saveUserGuilds(user.id, guilds);
+
+    // Create JWT token - only include user info (keep it small)
     const jwtToken = jwt.sign(
       {
         id: user.id,
@@ -63,13 +68,6 @@ export async function GET(request: NextRequest) {
         discriminator: user.discriminator,
         avatar: user.avatar,
         email: user.email,
-        guilds: guilds.map((g: any) => ({
-          id: g.id,
-          name: g.name,
-          icon: g.icon,
-          owner: g.owner,
-          permissions: g.permissions,
-        })),
       },
       process.env.NEXTAUTH_SECRET!,
       { expiresIn: "7d" }
