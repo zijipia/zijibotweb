@@ -1,7 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
-import jwt from "jsonwebtoken";
 import { verifyAuth } from "@/lib/auth";
-import { getServerConfig, updateServerConfig } from "@/lib/mongodb";
+import {
+  getBotServerConfig,
+  getBotUserGuilds,
+  checkBotServerAdmin,
+  updateBotServerConfig,
+} from "@/lib/bot-api";
 
 // GET - Fetch server config
 export async function GET(request: NextRequest) {
@@ -22,7 +26,8 @@ export async function GET(request: NextRequest) {
     }
 
     // Check if user has access to this server
-    const hasAccess = authData.guilds.some((g: any) => g.id === serverId);
+    const guilds = await getBotUserGuilds(authData.id);
+    const hasAccess = guilds.some((g: any) => g.id === serverId);
     if (!hasAccess) {
       return NextResponse.json(
         { error: "You don't have access to this server" },
@@ -30,8 +35,8 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Get config from MongoDB
-    const config = await getServerConfig(serverId);
+    // Get config from bot server
+    const config = await getBotServerConfig(serverId);
     
     // Return existing config or default config
     const defaultConfig = {
@@ -74,16 +79,16 @@ export async function PUT(request: NextRequest) {
     }
 
     // Check if user is admin on this server
-    const serverGuild = authData.guilds.find((g: any) => g.id === serverId);
-    if (!serverGuild || !serverGuild.owner) {
+    const isAdmin = await checkBotServerAdmin(authData.id, serverId);
+    if (!isAdmin) {
       return NextResponse.json(
         { error: "You must be server owner to modify config" },
         { status: 403 }
       );
     }
 
-    // Save config to MongoDB
-    const success = await updateServerConfig(serverId, config);
+    // Save config to bot server
+    const success = await updateBotServerConfig(serverId, config);
     
     if (!success) {
       return NextResponse.json(
@@ -91,9 +96,6 @@ export async function PUT(request: NextRequest) {
         { status: 500 }
       );
     }
-
-    // TODO: Broadcast update via WebSocket to bot server for real-time reload
-    // botWS.send('config:updated', { serverId, config });
 
     return NextResponse.json({
       success: true,
