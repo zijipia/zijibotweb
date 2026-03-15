@@ -1,54 +1,61 @@
-# Bot Configuration Dashboard
+# Ziji Bot Web Dashboard
 
-A modern web-based configuration management system for Discord bots with real-time updates and MongoDB integration.
+A modern web-based dashboard for managing Discord bot configurations with Discord OAuth 2.0 authentication.
 
 ## Features
 
-- **Discord Authentication** - Secure OAuth 2.0 login
-- **Server Management** - Manage bot settings for multiple Discord servers
-- **Admin Panel** - Server owner-only configuration interface
-- **Real-time Updates** - WebSocket support for live config changes
-- **MongoDB Integration** - Persistent storage with zihooks
-- **Custom Commands** - Manage bot commands from the dashboard
-- **Status Monitoring** - Real-time bot status and uptime tracking
+- **Discord OAuth Authentication** - Secure login with Discord accounts
+- **Server Selection** - View and select Discord servers you own
+- **Dashboard Interface** - Clean, modern UI built with shadcn/ui
+- **User Verification** - JWT-based session management with HTTP-only cookies
+- **Multi-Server Support** - Manage multiple Discord servers from one dashboard
 
 ## Tech Stack
 
 - **Frontend**: Next.js 16, React 19, TypeScript
-- **Styling**: Tailwind CSS, shadcn/ui
-- **Authentication**: Discord OAuth 2.0, JWT
-- **Database**: MongoDB
-- **Real-time**: WebSocket
-- **API**: REST & WebSocket
+- **Styling**: Tailwind CSS v4, shadcn/ui components
+- **Authentication**: Discord OAuth 2.0, JWT tokens
+- **Session Management**: HTTP-only cookies
+- **UI Components**: Radix UI, Lucide React icons
+- **Form Handling**: React Hook Form, Zod validation
+- **Utilities**: Axios, bcryptjs
 
 ## Quick Start
+
+### Prerequisites
+
+- Node.js 18+ (pnpm, npm, yarn, or bun)
+- Discord Developer Application (OAuth2 credentials)
 
 ### 1. Clone & Install
 
 ```bash
 git clone <repository-url>
-cd bot-dashboard
+cd zijibotweb
 pnpm install
 ```
 
+Or use your preferred package manager (npm, yarn, bun).
+
 ### 2. Set Environment Variables
 
-Create a `.env.local` file or set in Vercel project settings:
+Create a `.env.local` file in the project root:
 
 ```env
-DISCORD_CLIENT_ID=your_discord_app_id
-DISCORD_CLIENT_SECRET=your_discord_secret
+DISCORD_CLIENT_ID=your_discord_client_id
+DISCORD_CLIENT_SECRET=your_discord_client_secret
 DISCORD_REDIRECT_URI=http://localhost:3000/api/auth/discord/callback
-NEXTAUTH_SECRET=$(openssl rand -base64 32)
+NEXTAUTH_SECRET=your_random_secret_key
 ```
 
 ### 3. Get Discord OAuth Credentials
 
 1. Go to [Discord Developer Portal](https://discord.com/developers/applications)
-2. Create a new application
-3. Go to OAuth2 → General
-4. Copy Client ID and Client Secret
-5. Add Redirect URL: `http://localhost:3000/api/auth/discord/callback`
+2. Click "New Application" and give it a name
+3. Go to "OAuth2" → "General"
+4. Copy your **Client ID** and **Client Secret**
+5. Click "Add Redirect" and add: `http://localhost:3000/api/auth/discord/callback`
+6. For production, also add your Vercel deployment URL redirect
 
 ### 4. Run Development Server
 
@@ -56,225 +63,183 @@ NEXTAUTH_SECRET=$(openssl rand -base64 32)
 pnpm dev
 ```
 
-Visit http://localhost:3000
+Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-### 5. Test Login
+### 5. Test the Application
 
-1. Click "Login with Discord"
-2. Authorize the application
-3. Select a Discord server you own
-4. Access the admin panel to manage settings
+1. Click "Login with Discord" on the home page
+2. Authorize the application on Discord's OAuth screen
+3. You'll be redirected to the dashboard
+4. See your Discord servers you own
 
 ## Project Structure
 
 ```
 app/
-├── page.tsx                 # Login page
-├── api/
-│   ├── auth/               # Authentication endpoints
-│   └── config/             # Configuration CRUD
+├── page.tsx                 # Home/login page
+├── layout.tsx              # Root layout with metadata
 └── dashboard/
-    ├── layout.tsx          # Dashboard layout
-    ├── page.tsx            # Server selector
-    ├── admin/page.tsx      # Admin panel
-    └── settings/page.tsx   # Settings page
+    ├── layout.tsx          # Dashboard layout wrapper
+    ├── page.tsx            # Dashboard home (server selector)
+    ├── admin/
+    │   └── page.tsx        # Admin panel (future)
+    └── settings/
+        └── page.tsx        # Settings page (future)
 
-components/dashboard/
-├── nav.tsx                 # Navigation sidebar
-├── server-selector.tsx     # Server selection grid
-├── config-form.tsx         # Settings form
-├── custom-commands.tsx     # Command manager
-└── server-status.tsx       # Status indicator
+components/
+├── dashboard/
+│   ├── server-selector.tsx # Server grid selection component
+│   ├── config-form.tsx     # Configuration form (future)
+│   ├── custom-commands.tsx # Custom commands manager (future)
+│   ├── server-status.tsx   # Server status display (future)
+│   └── nav.tsx             # Navigation sidebar (future)
+├── ui/                     # shadcn/ui components
+│   ├── button.tsx
+│   ├── card.tsx
+│   ├── dialog.tsx
+│   └── ... (other UI components)
+└── theme-provider.tsx      # Theme provider wrapper
 
 lib/
-├── auth.ts                 # Authentication utilities
-├── mongodb.ts              # Database helpers
-└── ws.ts                   # WebSocket client
+├── auth.ts                 # JWT verification and OAuth URL generation
 
-hooks/
-└── use-websocket.ts        # WebSocket hooks
+public/                     # Static assets
 ```
 
-## API Reference
+## Authentication Flow
+
+1. User clicks "Login with Discord" on home page
+2. Redirected to Discord OAuth authorization screen
+3. User authorizes the application
+4. Discord redirects to `/api/auth/discord/callback`
+5. JWT token is created and stored in HTTP-only cookie
+6. User is redirected to dashboard with authenticated session
+
+## Key Pages
+
+### Home Page (`/`)
+- Login page with Discord OAuth button
+- Features showcase
+- Unauthenticated users only
+
+### Dashboard (`/dashboard`)
+- Authentication check on page load
+- Server selector grid showing user's Discord servers
+- Click a server to select it (future: access settings)
+- Displays server name, icon, and owner status
+
+## API Endpoints
 
 ### Authentication
-- `GET /api/auth/discord` - OAuth callback
-- `GET /api/auth/check` - Verify authentication
-- `GET /api/auth/user` - Get current user
-- `GET /api/auth/guilds` - Get user's servers
-- `POST /api/auth/logout` - Logout
+- `GET /api/auth/discord` - OAuth callback endpoint (receives Discord auth code)
+- `GET /api/auth/check` - Verify current user is authenticated
+- `GET /api/auth/guilds` - Get list of user's Discord servers
+- `POST /api/auth/logout` - Clear authentication session
 
-### Configuration
-- `GET /api/config?serverId=ID` - Get server config
-- `PUT /api/config` - Update server config (owner only)
+### Future Endpoints (In Development)
+- `GET /api/config` - Get server configuration
+- `PUT /api/config` - Update server configuration
+- `GET /api/commands` - Get custom commands
+- `POST /api/commands` - Create custom command
 
-Full API documentation in [API_REFERENCE.md](./API_REFERENCE.md)
+## Security Features
 
-## Configuration
-
-Each server can configure:
-- **Prefix** - Command prefix (e.g., `!`, `.`)
-- **Language** - Bot language
-- **Moderator Role** - Role for bot moderation
-- **Log Channel** - Channel for bot logs
-- **Auto Role** - Automatically assign roles to new members
-- **Custom Commands** - Add custom bot commands
-
-## MongoDB Integration
-
-The dashboard stores configurations in MongoDB collections:
-
-```javascript
-// bot_configs collection
-{
-  serverId: "123456789",
-  prefix: "!",
-  language: "en",
-  modRole: null,
-  logChannel: null,
-  autorole: false,
-  autoroleIds: [],
-  customCommands: [],
-  createdAt: Date,
-  updatedAt: Date
-}
-```
-
-See [BOT_INTEGRATION.md](./BOT_INTEGRATION.md) for bot server integration details.
-
-## Real-time Updates
-
-WebSocket support for real-time configuration updates and bot status:
-
-```typescript
-import { useConfigUpdates } from '@/hooks/use-websocket';
-
-export function MyComponent() {
-  useConfigUpdates('server_id', (config) => {
-    console.log('Config updated:', config);
-  });
-}
-```
-
-## Security
-
-- ✅ HTTP-only cookies for session tokens
-- ✅ JWT token expiration (7 days)
-- ✅ Server ownership verification
-- ✅ Input validation and sanitization
-- ✅ CORS protection
-- ⚠️ Rate limiting (TODO)
-- ⚠️ Audit logging (TODO)
+- ✅ HTTP-only cookies (prevents XSS access to tokens)
+- ✅ JWT token verification
+- ✅ Server-side authentication checks
+- ✅ CORS protection via Next.js
+- ✅ Input validation with Zod
+- ✅ Secure redirect after login
 
 ## Development
 
-### Adding a New Setting
+### Adding a New Page
 
-1. **Update Type** - Modify `ServerConfig` interface
-2. **Add Form Field** - Update `config-form.tsx`
-3. **Update Database** - Modify MongoDB schema
-4. **Test** - Run `pnpm dev` and test the flow
+1. Create file in `app/` or `app/dashboard/`
+2. Use `'use client'` for client components
+3. Use authentication check in layout or page
+4. Add navigation link in appropriate component
 
-### Testing Authentication
+### Creating a New Component
 
-```typescript
-import { verifyAuth } from '@/lib/auth';
+1. Create file in `components/`
+2. Use shadcn/ui components for consistency
+3. Follow TypeScript interfaces for props
+4. Use Tailwind CSS for styling
 
-export async function GET(request: NextRequest) {
-  const authData = await verifyAuth(request);
-  if (!authData) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-  // Your code here
-}
-```
+### Updating Environment Variables
 
-### Database Queries
+Variables needed:
+- `DISCORD_CLIENT_ID` - From Discord Developer Portal
+- `DISCORD_CLIENT_SECRET` - From Discord Developer Portal (keep secure!)
+- `DISCORD_REDIRECT_URI` - OAuth callback URL
+- `NEXTAUTH_SECRET` - Random secret for JWT signing
 
-```typescript
-import { getServerConfig, updateServerConfig } from '@/lib/mongodb';
+## Deployment to Vercel
 
-// Get config
-const config = await getServerConfig(serverId);
-
-// Update config
-await updateServerConfig(serverId, { prefix: '!' });
-```
-
-## Deployment
-
-### Deploy to Vercel
-
-1. Push code to GitHub
-2. Connect repository in Vercel
-3. Set environment variables
-4. Deploy
-
-See [DEPLOYMENT_CHECKLIST.md](./DEPLOYMENT_CHECKLIST.md) for full deployment guide.
-
-### Production Checklist
-
-- [ ] Set production Discord OAuth redirect URI
-- [ ] Set production environment variables
-- [ ] Enable HTTPS
-- [ ] Set up MongoDB in production
-- [ ] Configure WebSocket server
-- [ ] Set up error monitoring
-- [ ] Create database backups
+1. Push code to GitHub repository
+2. Connect repository in [Vercel](https://vercel.com)
+3. Add environment variables in Vercel project settings:
+   - `DISCORD_CLIENT_ID`
+   - `DISCORD_CLIENT_SECRET`
+   - `DISCORD_REDIRECT_URI=https://your-vercel-domain.vercel.app/api/auth/discord/callback`
+   - `NEXTAUTH_SECRET`
+4. Deploy!
 
 ## Troubleshooting
 
-### Login Not Working
-- Verify Discord OAuth credentials
-- Check redirect URI matches exactly
-- Clear browser cookies
+### "Unauthorized" Error
+- Check that `NEXTAUTH_SECRET` is set correctly
+- Verify JWT token in cookies (DevTools → Application → Cookies)
+- Clear cookies and try logging in again
 
-### Config Not Saving
-- Check MongoDB connection
-- Verify you're server owner
-- Check browser console for errors
+### Discord Login Redirect Loop
+- Verify `DISCORD_REDIRECT_URI` matches exactly in Discord Developer Portal
+- Check environment variables are set correctly
+- Ensure Client ID and Secret are correct
 
-### WebSocket Not Connecting
-- Verify WebSocket server is running
-- Check `NEXT_PUBLIC_WS_URL` environment variable
-- Check for firewall issues
+### 404 on API endpoints
+- Verify environment variables are loaded (check `.env.local`)
+- Confirm Discord OAuth credentials are valid
+- Check browser console for API error messages
 
-See [QUICK_START.md](./QUICK_START.md) for more troubleshooting tips.
+### "No servers found" Message
+- You need to own at least one Discord server to see it
+- If you're only a member (not owner), you won't see servers
+- Try creating a test server for development
 
-## Documentation
+## Future Features
 
-- **[QUICK_START.md](./QUICK_START.md)** - Quick setup guide
-- **[IMPLEMENTATION_GUIDE.md](./IMPLEMENTATION_GUIDE.md)** - Detailed architecture
-- **[API_REFERENCE.md](./API_REFERENCE.md)** - API endpoints
-- **[BOT_INTEGRATION.md](./BOT_INTEGRATION.md)** - Bot server integration
-- **[PROJECT_SUMMARY.md](./PROJECT_SUMMARY.md)** - Project overview
-- **[DEPLOYMENT_CHECKLIST.md](./DEPLOYMENT_CHECKLIST.md)** - Deployment guide
+- Server configuration management
+- Custom command builder
+- Bot status monitoring
+- Webhook integration
+- Database persistence
+- Admin role management
+- Auto-role assignment
+- Log channel configuration
 
 ## Contributing
 
-1. Create a feature branch
+1. Create a feature branch: `git checkout -b feature/your-feature`
 2. Make your changes
-3. Test thoroughly
-4. Submit a pull request
+3. Test locally with `pnpm dev`
+4. Commit and push
+5. Open a pull request
 
 ## License
 
 MIT
 
-## Support
+## Resources
 
-For issues or questions:
-1. Check the documentation
-2. Review [API_REFERENCE.md](./API_REFERENCE.md)
-3. See [IMPLEMENTATION_GUIDE.md](./IMPLEMENTATION_GUIDE.md)
-
-## Links
-
-- [Discord Developer Portal](https://discord.com/developers)
 - [Next.js Documentation](https://nextjs.org/docs)
-- [MongoDB Atlas](https://www.mongodb.com/atlas)
-- [shadcn/ui](https://ui.shadcn.com)
+- [Discord Developer Portal](https://discord.com/developers)
+- [shadcn/ui Components](https://ui.shadcn.com)
+- [Tailwind CSS](https://tailwindcss.com)
+- [React Hook Form](https://react-hook-form.com)
+- [Zod Validation](https://zod.dev)
 
 ---
 
-Built with ❤️ for Discord bot developers
+Built with Next.js 16, React 19, and Discord OAuth 2.0
