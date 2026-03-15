@@ -31,12 +31,12 @@ router.get("/users/:userId/guilds", async (req, res) => {
 
 		const { userId } = req.params;
 
-		// Get cached user guilds
-		const userGuilds = await db.collection("user_guilds").findOne({
+		// Get cached user guilds using ZiUser model
+		const user = await db.ZiUser.findOne({
 			userId,
 		});
 
-		if (!userGuilds) {
+		if (!user || !user.guilds) {
 			return res.json({
 				success: true,
 				data: [],
@@ -45,7 +45,7 @@ router.get("/users/:userId/guilds", async (req, res) => {
 
 		res.json({
 			success: true,
-			data: userGuilds.guilds || [],
+			data: user.guilds || [],
 		});
 	} catch (error) {
 		console.error("[Bot API] Error fetching user guilds:", error);
@@ -80,7 +80,7 @@ router.post("/users/:userId/session", async (req, res) => {
 			});
 		}
 
-		const result = await db.collection("user_discord_sessions").updateOne(
+		const result = await db.ZiUser.updateOne(
 			{ userId },
 			{
 				$set: {
@@ -88,7 +88,6 @@ router.post("/users/:userId/session", async (req, res) => {
 					discordAccessToken,
 					userInfo: userInfo || {},
 					updatedAt: new Date(),
-					createdAt: new Date(),
 				},
 			},
 			{ upsert: true },
@@ -134,14 +133,13 @@ router.post("/users/:userId/guilds", async (req, res) => {
 			});
 		}
 
-		const result = await db.collection("user_guilds").updateOne(
+		const result = await db.ZiUser.updateOne(
 			{ userId },
 			{
 				$set: {
 					userId,
 					guilds,
 					updatedAt: new Date(),
-					createdAt: new Date(),
 				},
 			},
 			{ upsert: true },
@@ -179,12 +177,12 @@ router.get("/users/:userId/servers/:serverId/admin", async (req, res) => {
 
 		const { userId, serverId } = req.params;
 
-		// Get user's guilds
-		const userGuilds = await db.collection("user_guilds").findOne({
+		// Get user's guilds using ZiUser model
+		const user = await db.ZiUser.findOne({
 			userId,
 		});
 
-		if (!userGuilds) {
+		if (!user || !user.guilds) {
 			return res.json({
 				success: true,
 				data: {
@@ -196,7 +194,7 @@ router.get("/users/:userId/servers/:serverId/admin", async (req, res) => {
 		}
 
 		// Check if user owns or has admin in the server
-		const serverGuild = userGuilds.guilds.find((g) => g.id === serverId);
+		const serverGuild = user.guilds.find((g) => g.id === serverId);
 		const isAdmin = serverGuild && serverGuild.owner === true;
 
 		res.json({
@@ -234,8 +232,8 @@ router.get("/servers/:serverId/config", async (req, res) => {
 
 		const { serverId } = req.params;
 
-		const config = await db.collection("server_configs").findOne({
-			serverId,
+		const config = await db.ZiGuild.findOne({
+			guildId: serverId,
 		});
 
 		// Return existing config or default
@@ -280,14 +278,13 @@ router.post("/servers/:serverId/config", async (req, res) => {
 		const { serverId } = req.params;
 		const config = req.body;
 
-		const result = await db.collection("server_configs").updateOne(
-			{ serverId },
+		const result = await db.ZiGuild.updateOne(
+			{ guildId: serverId },
 			{
 				$set: {
-					serverId,
+					guildId: serverId,
 					...config,
 					updatedAt: new Date(),
-					createdAt: new Date(),
 				},
 			},
 			{ upsert: true },
