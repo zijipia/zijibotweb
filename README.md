@@ -30,9 +30,12 @@ A modern web-based dashboard for managing Discord bot configurations with Discor
 ### 1. Clone & Install
 
 ```bash
-git clone <repository-url>
-cd zijibotweb
+git clone https://github.com/zijipia/zijibotweb .
+
+git submodule update --init --recursive
+
 pnpm install
+
 ```
 
 Or use your preferred package manager (npm, yarn, bun).
@@ -46,6 +49,7 @@ DISCORD_CLIENT_ID=your_discord_client_id
 DISCORD_CLIENT_SECRET=your_discord_client_secret
 DISCORD_REDIRECT_URI=http://localhost:3000/api/auth/discord/callback
 NEXTAUTH_SECRET=your_random_secret_key
+BOT_API_URL=your_api-url
 ```
 
 ### 3. Get Discord OAuth Credentials
