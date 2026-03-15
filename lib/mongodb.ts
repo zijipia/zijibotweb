@@ -251,3 +251,121 @@ export async function deleteUserSession(token: string): Promise<boolean> {
     return false;
   }
 }
+
+/**
+ * Save user Discord session with access token
+ */
+export async function saveUserSession(
+  userId: string,
+  discordAccessToken: string
+): Promise<boolean> {
+  const db = await getDB();
+  if (!db) {
+    console.log('[v0] Database not available, skipping user session save');
+    return false;
+  }
+
+  try {
+    const result = await db
+      .collection('user_discord_sessions')
+      .updateOne(
+        { userId },
+        {
+          $set: {
+            userId,
+            discordAccessToken,
+            updatedAt: new Date(),
+            createdAt: new Date(),
+          },
+        },
+        { upsert: true }
+      );
+
+    console.log('[v0] User session saved:', userId);
+    return result.acknowledged;
+  } catch (error) {
+    console.error('[v0] Error saving user session:', error);
+    return false;
+  }
+}
+
+/**
+ * Get user Discord access token
+ */
+export async function getUserAccessToken(userId: string): Promise<string | null> {
+  const db = await getDB();
+  if (!db) return null;
+
+  try {
+    const session = await db
+      .collection('user_discord_sessions')
+      .findOne({ userId });
+
+    return session?.discordAccessToken || null;
+  } catch (error) {
+    console.error('[v0] Error getting user access token:', error);
+    return null;
+  }
+}
+
+/**
+ * Save user guilds (Discord server list with metadata)
+ */
+export async function saveUserGuilds(userId: string, guilds: any[]): Promise<boolean> {
+  const db = await getDB();
+  if (!db) {
+    console.log('[v0] Database not available, skipping guilds save');
+    return false;
+  }
+
+  try {
+    const processedGuilds = guilds.map((g: any) => ({
+      id: g.id,
+      name: g.name,
+      icon: g.icon,
+      owner: g.owner,
+      permissions: g.permissions,
+      permissionsNew: g.permissions_new,
+    }));
+
+    const result = await db
+      .collection('user_guilds')
+      .updateOne(
+        { userId },
+        {
+          $set: {
+            userId,
+            guilds: processedGuilds,
+            updatedAt: new Date(),
+            createdAt: new Date(),
+          },
+        },
+        { upsert: true }
+      );
+
+    console.log('[v0] User guilds saved:', userId, `(${guilds.length} guilds)`);
+    return result.acknowledged;
+  } catch (error) {
+    console.error('[v0] Error saving user guilds:', error);
+    return false;
+  }
+}
+
+/**
+ * Get user guilds from cache
+ */
+export async function getUserGuilds(userId: string): Promise<any[]> {
+  const db = await getDB();
+  if (!db) return [];
+
+  try {
+    const result = await db
+      .collection('user_guilds')
+      .findOne({ userId });
+
+    return result?.guilds || [];
+  } catch (error) {
+    console.error('[v0] Error getting user guilds:', error);
+    return [];
+  }
+}

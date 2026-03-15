@@ -7,13 +7,6 @@ interface AuthData {
   discriminator: string;
   avatar: string;
   email: string;
-  guilds: Array<{
-    id: string;
-    name: string;
-    icon: string;
-    owner: boolean;
-    permissions: string;
-  }>;
   iat?: number;
   exp?: number;
 }
