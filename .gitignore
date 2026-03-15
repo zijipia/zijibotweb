@@ -18,3 +18,4 @@ node_modules/
 .env
 pnpm-lock.yaml
 next-env.d.ts
+next-env.d.ts
