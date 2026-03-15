@@ -9,6 +9,8 @@ A modern web-based dashboard for managing Discord bot configurations with Discor
 - **Dashboard Interface** - Clean, modern UI built with shadcn/ui
 - **User Verification** - JWT-based session management with HTTP-only cookies
 - **Multi-Server Support** - Manage multiple Discord servers from one dashboard
+- **Guild Configuration Management** - Configure voice logging, join-to-create, and auto-role features
+- **Bot Server Integration** - Seamless communication with bot server for data persistence
 
 ## Tech Stack
 
@@ -140,11 +142,17 @@ public/                     # Static assets
 - `GET /api/auth/guilds` - Get list of user's Discord servers
 - `POST /api/auth/logout` - Clear authentication session
 
-### Future Endpoints (In Development)
-- `GET /api/config` - Get server configuration
+### Guild Configuration Endpoints
+- `GET /api/guild/config?guildId=ID` - Get guild configuration
+- `PUT /api/guild/config` - Update complete guild configuration
+- `PUT /api/guild/voice` - Update voice logging settings
+- `PUT /api/guild/join-to-create` - Update join-to-create settings
+- `POST /api/guild/join-to-create` - Block/unblock user from join-to-create
+- `PUT /api/guild/auto-role` - Update auto-role configuration
+
+### Legacy Config Endpoints
+- `GET /api/config?serverId=ID` - Get server configuration
 - `PUT /api/config` - Update server configuration
-- `GET /api/commands` - Get custom commands
-- `POST /api/commands` - Create custom command
 
 ## Security Features
 
@@ -212,16 +220,18 @@ Variables needed:
 - If you're only a member (not owner), you won't see servers
 - Try creating a test server for development
 
+## Documentation
+
+- **[GUILD_CONFIG_API.md](./GUILD_CONFIG_API.md)** - Comprehensive guild configuration API documentation
+- **[README.md](./README.md)** - Main project documentation
+
 ## Future Features
 
-- Server configuration management
 - Custom command builder
 - Bot status monitoring
 - Webhook integration
-- Database persistence
-- Admin role management
-- Auto-role assignment
-- Log channel configuration
+- Admin dashboard UI components
+- Advanced permission management
 
 ## Contributing
 
