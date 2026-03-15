@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { verifyAuth } from "@/lib/auth";
-import { getUserGuilds } from "@/lib/mongodb";
+import { getBotUserGuilds } from "@/lib/bot-api";
 
 export async function GET(request: NextRequest) {
   try {
@@ -10,8 +10,8 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Get guilds from MongoDB instead of JWT to avoid cookie size limits
-    const guilds = await getUserGuilds(authData.id);
+    // Get guilds from bot server
+    const guilds = await getBotUserGuilds(authData.id);
 
     return NextResponse.json(guilds);
   } catch (error) {

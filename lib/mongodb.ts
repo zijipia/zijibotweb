@@ -1,13 +1,14 @@
 /**
- * MongoDB Integration Template
+ * DEPRECATED - This file is no longer used in the web dashboard
  * 
- * This file shows how to integrate with your bot's MongoDB instance
- * using zihooks.get("db")
+ * The web dashboard now communicates with the bot server via API endpoints
+ * instead of directly accessing MongoDB.
  * 
- * Usage in API routes:
- * import { getDB } from '@/lib/mongodb';
- * const db = await getDB();
- * const collection = db.collection('bot_configs');
+ * All database operations should use /lib/bot-api.ts instead.
+ * 
+ * See BOT_API_ENDPOINTS.md for the new API structure.
+ * 
+ * This file is kept for reference only. Remove it if not needed.
  */
 
 // Type definitions

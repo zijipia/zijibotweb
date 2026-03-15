@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import axios from "axios";
 import jwt from "jsonwebtoken";
-import { saveUserSession, saveUserGuilds } from "@/lib/mongodb";
+import { saveBotUserSession, saveBotUserGuilds } from "@/lib/bot-api";
 
 const DISCORD_API = "https://discord.com/api/v10";
 const CLIENT_ID = process.env.DISCORD_CLIENT_ID!;
@@ -56,9 +56,13 @@ export async function GET(request: NextRequest) {
 
     const guilds = guildsResponse.data;
 
-    // Save user session and guilds to MongoDB
-    await saveUserSession(user.id, access_token);
-    await saveUserGuilds(user.id, guilds);
+    // Save user session and guilds to bot server
+    await saveBotUserSession(user.id, access_token, {
+      username: user.username,
+      avatar: user.avatar,
+      email: user.email,
+    });
+    await saveBotUserGuilds(user.id, guilds);
 
     // Create JWT token - only include user info (keep it small)
     const jwtToken = jwt.sign(
