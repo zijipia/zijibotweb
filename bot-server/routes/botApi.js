@@ -1,5 +1,6 @@
 const express = require("express");
 const router = express.Router();
+const jwt = require("jsonwebtoken");
 
 const { useHooks } = require("zihooks");
 
@@ -13,7 +14,82 @@ const getDB = () => {
 	}
 };
 
+// Middleware to verify Bearer token
+const verifyToken = (req, res, next) => {
+	try {
+		const authHeader = req.headers.authorization;
+		if (!authHeader || !authHeader.startsWith("Bearer ")) {
+			return res.status(401).json({
+				success: false,
+				error: "Missing or invalid authorization header",
+			});
+		}
+
+		const token = authHeader.slice(7); // Remove "Bearer " prefix
+		const secret = process.env.NEXTAUTH_SECRET;
+		
+		if (!secret) {
+			console.error("[Bot API] NEXTAUTH_SECRET not configured");
+			return res.status(500).json({
+				success: false,
+				error: "Server configuration error",
+			});
+		}
+
+		const decoded = jwt.verify(token, secret);
+		req.userId = decoded.userId;
+		req.user = decoded;
+		next();
+	} catch (error) {
+		console.error("[Bot API] Token verification failed:", error);
+		return res.status(401).json({
+			success: false,
+			error: "Invalid or expired token",
+		});
+	}
+};
+
 // ============ USER ENDPOINTS ============
+
+/**
+ * GET /bot/users/me/guilds
+ * Get authenticated user's guilds using Bearer token
+ * This endpoint is called from client-side to bypass Cloudflare blocking server requests
+ */
+router.get("/users/me/guilds", verifyToken, async (req, res) => {
+	try {
+		const db = getDB();
+		if (!db) {
+			return res.status(500).json({
+				success: false,
+				error: "Database not available",
+			});
+		}
+
+		const userId = req.userId;
+		console.log("[Bot API] Fetching guilds for user:", userId);
+
+		const user = await db.ZiUser.findOne({ userID: userId });
+
+		if (!user || !user.guilds) {
+			return res.json({
+				success: true,
+				data: [],
+			});
+		}
+
+		return res.json({
+			success: true,
+			data: user.guilds || [],
+		});
+	} catch (error) {
+		console.error("[Bot API] Error fetching user guilds:", error);
+		return res.status(500).json({
+			success: false,
+			error: error.message,
+		});
+	}
+});
 
 /**
  * GET /bot/users/:userId/guilds

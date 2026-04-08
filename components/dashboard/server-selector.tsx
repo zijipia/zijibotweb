@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useBot } from '@/hooks/useBot';
 import { Card } from '@/components/ui/card';
 
 interface Guild {
@@ -19,16 +20,17 @@ interface ServerSelectorProps {
 export function ServerSelector({ onSelect, selectedServerId }: ServerSelectorProps) {
   const [guilds, setGuilds] = useState<Guild[]>([]);
   const [loading, setLoading] = useState(true);
+  const { request } = useBot({ autoFetch: true });
 
   useEffect(() => {
     const fetchGuilds = async () => {
       try {
-        const response = await fetch('/api/auth/guilds', {
-          credentials: 'include',
-        });
-        if (response.ok) {
-          const data = await response.json();
-          setGuilds(data);
+        const response = await request<{ data: Guild[] }>(
+          '/bot/users/me/guilds',
+          { method: 'GET' }
+        );
+        if (response?.data) {
+          setGuilds(response.data);
         }
       } catch (error) {
         console.error('[v0] Fetch guilds error:', error);
@@ -38,7 +40,7 @@ export function ServerSelector({ onSelect, selectedServerId }: ServerSelectorPro
     };
 
     fetchGuilds();
-  }, []);
+  }, [request]);
 
   if (loading) {
     return (
