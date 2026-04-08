@@ -211,6 +211,45 @@ export const DEFAULT_CONFIG: ServerConfig = {
   customCommands: [],
 };
 
+// ZiGuild Configuration Types
+export interface TempChannel {
+  channelId: string;
+  ownerId: string;
+  locked: boolean;
+}
+
+export interface VoiceConfig {
+  logMode: boolean;
+}
+
+export interface JoinToCreateConfig {
+  enabled: boolean;
+  voiceChannelId: string | null;
+  categoryId: string | null;
+  defaultUserLimit: number;
+  tempChannels: TempChannel[];
+  blockedUser: string[];
+}
+
+export interface AutoRoleConfig {
+  enabled: boolean;
+  roleIds: string[];
+}
+
+export interface ZiGuildConfig {
+  guildId: string;
+  voice: VoiceConfig;
+  joinToCreate: JoinToCreateConfig;
+  autoRole: AutoRoleConfig;
+  updatedAt?: Date;
+}
+
+export interface ZiGuildConfigDB extends ZiGuildConfig {
+  _id?: string;
+  createdAt?: Date;
+  updatedAt: Date;
+}
+
 // Validation Schemas (for use with zod/yup)
 export const CONFIG_CONSTRAINTS = {
   prefix: {
@@ -267,5 +306,43 @@ export function isBotStatusPayload(obj: any): obj is BotStatusPayload {
     ['online', 'offline', 'idle'].includes(obj.status) &&
     typeof obj.uptime === 'number' &&
     typeof obj.version === 'string'
+  );
+}
+
+// ZiGuild Type Guards
+export function isVoiceConfig(obj: any): obj is VoiceConfig {
+  return (
+    typeof obj === 'object' &&
+    typeof obj.logMode === 'boolean'
+  );
+}
+
+export function isJoinToCreateConfig(obj: any): obj is JoinToCreateConfig {
+  return (
+    typeof obj === 'object' &&
+    typeof obj.enabled === 'boolean' &&
+    (obj.voiceChannelId === null || typeof obj.voiceChannelId === 'string') &&
+    (obj.categoryId === null || typeof obj.categoryId === 'string') &&
+    typeof obj.defaultUserLimit === 'number' &&
+    Array.isArray(obj.tempChannels) &&
+    Array.isArray(obj.blockedUser)
+  );
+}
+
+export function isAutoRoleConfig(obj: any): obj is AutoRoleConfig {
+  return (
+    typeof obj === 'object' &&
+    typeof obj.enabled === 'boolean' &&
+    Array.isArray(obj.roleIds)
+  );
+}
+
+export function isZiGuildConfig(obj: any): obj is ZiGuildConfig {
+  return (
+    typeof obj === 'object' &&
+    typeof obj.guildId === 'string' &&
+    isVoiceConfig(obj.voice) &&
+    isJoinToCreateConfig(obj.joinToCreate) &&
+    isAutoRoleConfig(obj.autoRole)
   );
 }
