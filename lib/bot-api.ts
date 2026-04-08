@@ -19,6 +19,11 @@ async function botApiRequest<T = any>(
   options?: RequestInit
 ): Promise<T> {
   const url = `${BOT_API_BASE}${endpoint}`;
+  console.log("[v0] Bot API Request:", {
+    url,
+    method: options?.method || "GET",
+    timestamp: new Date().toISOString(),
+  });
 
   try {
     const response = await fetch(url, {
@@ -29,16 +34,31 @@ async function botApiRequest<T = any>(
       },
     });
 
+    console.log("[v0] Bot API Response:", {
+      url,
+      status: response.status,
+      ok: response.ok,
+      timestamp: new Date().toISOString(),
+    });
+
     if (!response.ok) {
       const error = await response.text();
-      console.error(`[v0] Bot API error at ${endpoint}:`, error);
-      throw new Error(`Bot API error: ${response.status}`);
+      console.error(`[v0] Bot API error at ${endpoint}:`, {
+        status: response.status,
+        error,
+      });
+      throw new Error(`Bot API error: ${response.status} - ${error}`);
     }
 
     const data = await response.json();
+    console.log("[v0] Bot API parsed response:", { endpoint, dataType: typeof data, hasData: !!data });
     return data as T;
   } catch (error) {
-    console.error(`[v0] Bot API request failed for ${endpoint}:`, error);
+    console.error(`[v0] Bot API request failed for ${endpoint}:`, {
+      url,
+      error: error instanceof Error ? error.message : String(error),
+      timestamp: new Date().toISOString(),
+    });
     throw error;
   }
 }
@@ -48,6 +68,7 @@ async function botApiRequest<T = any>(
  */
 export async function getBotUserGuilds(userId: string): Promise<any[]> {
   try {
+    console.log("[v0] getBotUserGuilds called for userId:", userId);
     const response = await botApiRequest<BotApiResponse>(
       `/bot/users/${userId}/guilds`,
       {
@@ -55,9 +76,13 @@ export async function getBotUserGuilds(userId: string): Promise<any[]> {
       }
     );
 
+    console.log("[v0] getBotUserGuilds response:", response);
     return response.data || [];
   } catch (error) {
-    console.error("[v0] Failed to get user guilds from bot:", error);
+    console.error("[v0] Failed to get user guilds from bot:", {
+      userId,
+      error: error instanceof Error ? error.message : String(error),
+    });
     return [];
   }
 }
